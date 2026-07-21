@@ -3,4 +3,4 @@ targets:
     mode: development
     default: true
     workspace:
-      host: https://dbc-3f6250bf-8043.cloud.databricks.com/
+      profile: DEFAULT
