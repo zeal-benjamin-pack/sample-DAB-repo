@@ -1,0 +1,7 @@
+variables:
+  catalog:
+    description: Unity Catalog catalog the ingestion pipeline publishes tables into.
+    default: main
+  schema:
+    description: Schema (database) the ingestion pipeline publishes tables into.
+    default: ingestion_demo

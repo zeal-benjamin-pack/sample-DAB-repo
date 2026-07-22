@@ -1,0 +1,12 @@
+resources:
+  jobs:
+    ingestion_job:
+      name: sample-ingestion-job
+      schedule:
+        quartz_cron_expression: "0 0 * * * ?"
+        timezone_id: UTC
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: run_ingestion_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.ingestion_pipeline.id}

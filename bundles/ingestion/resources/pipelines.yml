@@ -1,0 +1,12 @@
+resources:
+  pipelines:
+    ingestion_pipeline:
+      name: sample-ingestion-pipeline
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      libraries:
+        - notebook:
+            path: ../src/ingest_pipeline.py
+      configuration:
+        pipelines.reset.allowed: "true"
