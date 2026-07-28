@@ -1,1 +1,16 @@
+# Claude
 .claude
+
+# Databricks Asset Bundles — local bundle state & cached auth.
+# Never commit this: it holds per-user deploy state and tokens.
+.databricks/
+
+# Python
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+
+# Local env / credentials (in case any get created locally)
+.env
+.venv/
+*.databrickscfg

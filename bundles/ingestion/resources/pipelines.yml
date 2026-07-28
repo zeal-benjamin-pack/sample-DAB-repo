@@ -10,3 +10,13 @@ resources:
             path: ../src/ingest_pipeline.py
       configuration:
         pipelines.reset.allowed: "true"
+    sql_ingestion_pipeline:
+      name: sample-sql-ingestion-pipeline
+      catalog: ${var.catalog}
+      schema: ${var.schema}
+      serverless: true
+      libraries:
+        - notebook:
+            path: ../src/sql_ingest_pipeline.ipynb
+      configuration:
+        pipelines.reset.allowed: "true"

@@ -10,3 +10,27 @@ resources:
         - task_key: run_ingestion_pipeline
           pipeline_task:
             pipeline_id: ${resources.pipelines.ingestion_pipeline.id}
+    sql_ingestion_job:
+      name: sample-sql-ingestion-job
+      schedule:
+        quartz_cron_expression: "0 0 * * * ?"
+        timezone_id: UTC
+        pause_status: UNPAUSED
+      tasks:
+        - task_key: prep_schemas
+          sql_task:
+            warehouse_id: "0e1e9d0770bd74e6"
+            file:
+              path: "../src/schema_setup.sql"
+        - task_key: mock_data
+          depends_on:
+            - task_key: prep_schemas
+          sql_task:
+            warehouse_id: "0e1e9d0770bd74e6"
+            file: 
+              path: "../src/mock_raw_data.sql"
+        - task_key: run_sql_ingestion_pipeline
+          depends_on:
+            - task_key: mock_data
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.sql_ingestion_pipeline.id}
