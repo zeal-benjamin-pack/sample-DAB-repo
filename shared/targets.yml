@@ -4,3 +4,12 @@ targets:
     default: true
     workspace:
       profile: DEFAULT
+ 
+  staging:
+    workspace:
+      host: https://dbc-290eaf7a-3d5c.cloud.databricks.com
+ 
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-290eaf7a-3d5c.cloud.databricks.com

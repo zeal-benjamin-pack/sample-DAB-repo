@@ -1,0 +1,92 @@
+# Azure DevOps CI/CD for Databricks Asset Bundles.
+#
+# This repo has two bundles (bundles/ingestion, bundles/transformation),
+# each with its own databricks.yml and no root-level bundle, so the
+# pipeline loops over bundles/*/ and deploys each one from its own folder.
+#
+# Flow: push to main -> deploy every bundle to `staging` automatically,
+# then pause for a manual approval before deploying to `prod`.
+
+trigger: none
+  # branches:
+  #   include:
+  #     - main
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  # Pin the CLI version for reproducible builds. Bump deliberately.
+  DATABRICKS_CLI_VERSION: "1.9.0"
+
+stages:
+  # ────────────────────────────────────────────────────────────────
+  - stage: Staging
+    displayName: Deploy to staging
+    variables:
+      - group: databricks-staging          # ADO Library variable group
+    jobs:
+      - job: deploy_staging
+        displayName: Validate & deploy bundles (staging)
+        steps:
+          - checkout: self
+
+          - script: |
+              curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/v$(DATABRICKS_CLI_VERSION)/install.sh | sh
+              databricks version
+            displayName: Install Databricks CLI
+
+          - script: |
+              set -euo pipefail
+              for bundle in bundles/*/ ; do
+                echo "=== Deploying ${bundle} to staging ==="
+                ( cd "$bundle" \
+                  && databricks bundle validate -t staging \
+                  && databricks bundle deploy   -t staging )
+              done
+            displayName: Deploy bundles
+            env:
+              # host comes from targets.yml; only the auth secret is injected here.
+              DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+              # --- OAuth service-principal alternative (recommended for the
+              # real client) --- remove DATABRICKS_TOKEN above and instead set:
+              # DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+              # DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
+
+  # ────────────────────────────────────────────────────────────────
+  - stage: Prod
+    displayName: Deploy to prod
+    dependsOn: Staging
+    condition: succeeded()
+    variables:
+      - group: databricks-prod
+    jobs:
+      - deployment: deploy_prod
+        displayName: Validate & deploy bundles (prod)
+        # Add a manual "Approvals" check on this Environment in ADO so prod
+        # never deploys without a human clicking approve.
+        environment: databricks-prod
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - script: |
+                    curl -fsSL https://raw.githubusercontent.com/databricks/setup-cli/v$(DATABRICKS_CLI_VERSION)/install.sh | sh
+                    databricks version
+                  displayName: Install Databricks CLI
+
+                - script: |
+                    set -euo pipefail
+                    for bundle in bundles/*/ ; do
+                      echo "=== Deploying ${bundle} to prod ==="
+                      ( cd "$bundle" \
+                        && databricks bundle validate -t prod \
+                        && databricks bundle deploy   -t prod )
+                    done
+                  displayName: Deploy bundles
+                  env:
+                    DATABRICKS_TOKEN: $(DATABRICKS_TOKEN)
+                    # DATABRICKS_CLIENT_ID: $(DATABRICKS_CLIENT_ID)
+                    # DATABRICKS_CLIENT_SECRET: $(DATABRICKS_CLIENT_SECRET)
